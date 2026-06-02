@@ -1,0 +1,10 @@
+{
+  "recommendations": [
+    "nromanov.dotrush",
+    "zlorn.vstuc"
+  ],
+  "unwantedRecommendations": [
+    "jetbrains.resharper-code",
+    "ms-dotnettools.csharp"
+  ]
+}

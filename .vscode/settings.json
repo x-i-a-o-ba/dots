@@ -1,0 +1,23 @@
+{
+  "dotrush.roslyn.projectOrSolutionFiles": [
+    "${workspaceFolder}/ecs-rts.sln",
+    "${workspaceFolder}/Assembly-CSharp.csproj"
+  ],
+  "dotrush.roslyn.compilerDiagnosticsScope": "openFiles",
+  "dotrush.roslyn.analyzerDiagnosticsScope": "openFiles",
+  "dotrush.roslyn.showItemsFromUnimportedNamespaces": true,
+  "dotrush.roslyn.skipUnrecognizedProjects": false,
+  "files.exclude": {
+    "**/.git": true,
+    "**/.DS_Store": true,
+    "**/Library": true,
+    "**/Temp": true,
+    "**/Obj": true,
+    "**/Logs": true
+  },
+  "search.exclude": {
+    "**/Library": true,
+    "**/Temp": true,
+    "**/Obj": true
+  }
+}
