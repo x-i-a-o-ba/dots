@@ -2,6 +2,7 @@ using System;
 using Common;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,11 +29,12 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
         }
         if (Input.GetMouseButtonUp(0))
         {
-            Vector2 selectEndPosition = Input.mousePosition;
+            selectEndPosition = Input.mousePosition;
 
             EntityManager entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;
             EntityQuery entityQuery = new EntityQueryBuilder(Allocator.Temp)
                 .WithAll<LocalTransform, Unit>()
+                .WithPresent<Selected>()
                 .Build(entityManager);
             NativeArray<Entity> entitieyArray = entityQuery.ToEntityArray(Allocator.Temp);
             for (int i = 0; i < entitieyArray.Length; i++)
@@ -40,14 +42,7 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
                 entityManager.SetComponentEnabled<Selected>(entitieyArray[i], false);
             }
 
-
-            entityQuery = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<LocalTransform, Unit>()
-                .WithPresent<Selected>()
-                .Build(entityManager);
             Rect selectionAreaRect = GetSlectionAreaRect();
-
-          entitieyArray = entityQuery.ToEntityArray(Allocator.Temp);
             NativeArray<LocalTransform> localTransformArray =
                 entityQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
             for (int i = 0; i < entitieyArray.Length; i++)
@@ -61,7 +56,6 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
                     entityManager.SetComponentEnabled<Selected>(entitieyArray[i], true);
                 }
             }
-            entityQuery.CopyFromComponentDataArray(localTransformArray);
 
             OnSelectionEnd?.Invoke(selectEndPosition);
         }
@@ -74,15 +68,12 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
 
             // EntityQueryBuilder：声明查询条件（此处为拥有 UnitMover 的所有实体）。
             // Allocator.Temp 分配的 Native 容器须在本帧内 Dispose，此处 using 隐式释放。
-            EntityQuery query = new EntityQueryBuilder(Allocator.Temp)
-                .WithAll<UnitMover, Selected>()
-                .Build(entityManager);
+            EntityQuery query = new EntityQueryBuilder(Allocator.Temp).WithAll<UnitMover, Selected>().Build(entityManager);
 
             NativeArray<Entity> entities = query.ToEntityArray(Allocator.Temp);
-            NativeArray<UnitMover> unitMovers = query.ToComponentDataArray<UnitMover>(
-                Allocator.Temp
-            );
-
+            NativeArray<UnitMover> unitMovers = query.ToComponentDataArray<UnitMover>(Allocator.Temp);
+            GenerateMovePositionArray(mousePosition, entities.Length);
+            
             for (int i = 0; i < entities.Length; i++)
             {
                 UnitMover unitMover = unitMovers[i];
@@ -113,5 +104,48 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
             upperRight.x - lowerLeft.x,
             upperRight.y - lowerLeft.y
         );
+    }
+
+    private NativeArray<float3> GenerateMovePositionArray(float3 targetPosition, int positionCount)
+    {
+        NativeArray<float3> positionArray = new NativeArray<float3>(positionCount, Allocator.Temp);
+        //如果位置数量小于等于0，则返回空数组
+        if (positionCount <= 0)
+        {
+            return positionArray;
+        }
+
+        //第一个位置就是目标位置
+        positionArray[0] = targetPosition;
+
+        if (positionCount == 1)
+        {
+            return positionArray;
+        }
+
+        //计算每个环的半径
+        float ringSize = 2.2f;
+        int ring = 0;
+        int positionIndex = 1;
+        while (positionIndex < positionCount)
+        {
+            int ringPositionCount = 3 + ring * 2;
+
+            for (int i = 0; i < ringPositionCount; i++)
+            {
+                float angle = i * 2 * math.PI / ringPositionCount;
+                float3 ringVector = math.rotate(quaternion.RotateY(angle), new float3(ringSize * (ring + 1), 0, 1));
+                float3 ringPosition = targetPosition + ringVector;
+                positionArray[positionIndex] = ringPosition;
+                positionIndex++;
+                if (positionIndex >= positionCount)
+                {
+                    break;
+                }
+            }
+            ring++;
+        }
+
+        return positionArray;
     }
 }
