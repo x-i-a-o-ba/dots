@@ -108,9 +108,11 @@ public class UnitSelectionManager : MonoSingleton<UnitSelectionManager>
                         GroupIndex = 0,
                     },
                 };
+                //如果射线碰撞到单位，则选中
                 if (collisionWorld.CastRay(raycastInput, out Unity.Physics.RaycastHit raycastHit))
                 {
-                    if (entityManager.HasComponent<Unit>(raycastHit.Entity))
+                    //如果单位存在且选中，则选中
+                    if (entityManager.HasComponent<Unit>(raycastHit.Entity)&&entityManager.HasComponent<Selected>(raycastHit.Entity))
                     {
                         entityManager.SetComponentEnabled<Selected>(raycastHit.Entity, true);
                         Selected selected = entityManager.GetComponentData<Selected>(raycastHit.Entity);

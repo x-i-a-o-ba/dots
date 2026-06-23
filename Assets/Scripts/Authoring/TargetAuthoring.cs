@@ -16,5 +16,5 @@ public class TargetAuthoring : MonoBehaviour
 
 public struct Target : IComponentData
 {
-    public Entity target;
+    public Entity targetEntity;
 }

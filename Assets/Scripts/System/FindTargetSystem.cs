@@ -3,6 +3,7 @@ using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Transforms;
+using UnityEngine;
 
 partial struct FindTargetSystem : ISystem
 {
@@ -15,12 +16,19 @@ partial struct FindTargetSystem : ISystem
 
         foreach (
             (
-                RefRO<LocalTransform> localTransform,
-                RefRO<FindTarget> findTarget,
+                RefRW<LocalTransform> localTransform,
+                RefRW<FindTarget> findTarget,
                 RefRW<Target> target
-            ) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<FindTarget>, RefRW<Target>>()
+            ) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<FindTarget>, RefRW<Target>>()
         )
         {
+            findTarget.ValueRW.timer -= SystemAPI.Time.DeltaTime;
+            if (findTarget.ValueRO.timer > 0f)
+            {
+                continue;
+            }
+            findTarget.ValueRW.timer = findTarget.ValueRO.timerMax;
+           
             distanceHitList.Clear();
             CollisionFilter filter = new CollisionFilter
             {
@@ -35,7 +43,8 @@ partial struct FindTargetSystem : ISystem
                     Unit targetUnit = SystemAPI.GetComponent<Unit>(distanceHit.Entity);
                     if (targetUnit.faction == findTarget.ValueRO.targetFaction)
                     {
-                        target.ValueRW.target = distanceHit.Entity;
+                        target.ValueRW.targetEntity = distanceHit.Entity;
+                        break;
                     }
                 }
             }

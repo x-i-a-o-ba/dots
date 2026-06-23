@@ -14,18 +14,19 @@ partial struct SelectedVisualSystem : ISystem
     {
         foreach (RefRO<Selected> selected in SystemAPI.Query<RefRO<Selected>>().WithPresent<Selected>())
         {
-            RefRW<LocalTransform> visualTransform = SystemAPI.GetComponentRW<LocalTransform>(
-                selected.ValueRO.visualEntity
-            );
+
+            if (selected.ValueRO.onDeselected)
+            {
+                RefRW<LocalTransform> visualTransform = SystemAPI.GetComponentRW<LocalTransform>(selected.ValueRO.visualEntity);
+                visualTransform.ValueRW.Scale = 0f;
+            }
 
             if (selected.ValueRO.onSelected)
             {
+                RefRW<LocalTransform> visualTransform = SystemAPI.GetComponentRW<LocalTransform>(selected.ValueRO.visualEntity);
                 visualTransform.ValueRW.Scale = selected.ValueRO.showScale;
             }
-            else
-            {
-                visualTransform.ValueRW.Scale = 0f;
-            }
+
 
         }
 
